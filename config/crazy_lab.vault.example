@@ -1,0 +1,16 @@
+---
+satellite_server_url: "https://{{ inventory_hostname }}"
+satellite_username: "admin"
+satellite_password: "supersecret"
+
+# Grab appropriate UUID from Subscription Allocation page in Red Hat Customer Portal
+# https://access.redhat.com/management/subscription_allocations
+crazy_lab_satellite_manifest_uuid: 
+
+satellite_compute_ressource_rhv_username: admin@internal
+satellite_compute_ressource_rhv_password: supersecret
+
+# Check https://access.redhat.com/management/activation_keys
+sfroemer_redhat_organization_id: 
+sfroemer_redhat_activationkey: 
+...

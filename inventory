@@ -1,0 +1,5 @@
+[satellite-dev]
+sfroemer-satellite-demo.crazy.lab ansible_user=root
+
+[satellite:children]
+satellite-dev

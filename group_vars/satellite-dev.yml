@@ -1,0 +1,82 @@
+---
+satellite_organization: "CRAZY.LAB"
+satellite_initial_location: "LOCAL"
+
+
+satellite_products:
+  - name: Red Hat Enterprise Linux for x86_64
+    repository_sets:
+      - name: Red Hat Enterprise Linux 8 for x86_64 - BaseOS (Kickstart)
+        releasever: 8.4
+        download_policy: "immediate"
+      - name: Red Hat Enterprise Linux 8 for x86_64 - BaseOS (RPMs)
+        releasever: 8
+      - name: Red Hat Enterprise Linux 8 for x86_64 - AppStream (Kickstart)
+        releasever: 8.4
+        download_policy: "immediate"
+      - name: Red Hat Enterprise Linux 8 for x86_64 - AppStream (RPMs)
+        releasever: 8
+      - name: Red Hat Satellite Client 6 for RHEL 8 x86_64 (RPMs)
+  - name: Red Hat Enterprise Linux for x86_64 - Extended Update Support
+    repository_sets:
+      - name: Red Hat Enterprise Linux 8 for x86_64 - BaseOS - Extended Update Support (RPMs)
+        releasever: 8.4
+      - name: Red Hat Enterprise Linux 8 for x86_64 - AppStream - Extended Update Support (RPMs)
+        releasever: 8.4
+
+
+# https://console.redhat.com/ansible/automation-hub/repo/published/redhat/satellite/content/role/content_view_publish/
+# https://console.redhat.com/ansible/automation-hub/repo/published/redhat/satellite/content/role/content_view_publish/
+satellite_content_views:
+  - name: CV-RHEL-8
+    repositories:
+      - name: Red Hat Enterprise Linux 8 for x86_64 - BaseOS RPMs 8
+        product: 'Red Hat Enterprise Linux for x86_64'
+      - name: Red Hat Enterprise Linux 8 for x86_64 - AppStream RPMs 8
+        product: 'Red Hat Enterprise Linux for x86_64'
+      - name: Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.4
+        product: 'Red Hat Enterprise Linux for x86_64'
+      - name: Red Hat Enterprise Linux 8 for x86_64 - AppStream Kickstart 8.4
+        product: 'Red Hat Enterprise Linux for x86_64'
+
+  - name: CCV-RHEL-8
+    components:
+      - content_view: "CV-RHEL-8"
+        latest: true
+
+satellite_activation_keys:
+  - name: "AK-RHEL-8-DEV"
+    auto_attach: false
+    lifecycle_environment: Development
+    content_view: CCV-RHEL-8
+
+satellite_lifecycle_environments:
+  - name: "Development"
+    label: DEV
+    prior: "Library"
+  - name: "Production"
+    label: PROD
+    prior: "Development"
+
+
+# https://console.redhat.com/ansible/automation-hub/repo/published/redhat/satellite/content/role/hostgroups/
+satellite_hostgroups:
+  - name: "HG_DEFAULT_RHEL_8_DEV"
+    lifecycle_environment: "Development"
+    content_view: "CCV-RHEL-8"
+    content_source: "satellite-2.crazy.lab"
+    environment: ""
+    domain: "crazy.lab"
+    architecture: x86_64
+    operatingsystem: "RedHat 8.4"
+    kickstart_repository: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.4"
+    ptable: "Kickstart default"
+    pxe_loader: "Grub2 UEFI"
+    locations:
+      - "LOCAL"
+    organization: "CRAZY.LAB"
+    activation_keys: "AK-RHEL-8-DEV"
+
+satellite_settings:
+  - name: destroy_vm_on_host_delete
+    value: true

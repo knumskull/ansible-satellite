@@ -1,0 +1,148 @@
+---
+- hosts: satellite-dev
+  gather_facts: true
+
+  vars_files:
+    - config/crazy_lab.vault
+
+  vars:
+    satellite_version: 6.12
+    satellite_module_name: "satellite"
+    satellite_desired_stream: "el8"
+
+  tasks:
+    - name: Register with activationkey
+      community.general.redhat_subscription:
+        state: present
+        activationkey: "{{ sfroemer_redhat_activationkey }}"
+        org_id: "{{ sfroemer_redhat_organization_id }}"
+
+    - name: Disable all repositories except the one required for Satellite
+      community.general.rhsm_repository:
+        name:
+          - rhel-8-for-x86_64-baseos-rpms
+          - rhel-8-for-x86_64-appstream-rpms
+          - "satellite-{{ satellite_version }}-for-rhel-8-x86_64-rpms"
+          - "satellite-maintenance-{{ satellite_version }}-for-rhel-8-x86_64-rpms"
+        purge: true
+
+    - block:
+      - name: "Retrieve remote satellite module file"
+        ansible.builtin.fetch:
+          src: "/etc/dnf/modules.d/{{ satellite_module_name }}.module"
+          dest: /tmp/ansible
+          fail_on_missing: false
+        register: fetch_result
+        changed_when: true
+
+      - name: "Set stream for {{ satellite_module_name }} module to empty, because it does not exist"
+        ansible.builtin.set_fact:
+          current_stream: ""
+        when: fetch_result.changed
+
+      - name: "Read stream from {{ satellite_module_name }} module"
+        ansible.builtin.set_fact:
+          current_stream: "{{ lookup( 'ini', 'stream section={{ satellite_module_name }} file=/tmp/ansible/{{ inventory_hostname }}/etc/dnf/modules.d/{{ satellite_module_name }}.module') }}"
+        when: not fetch_result.changed
+
+      - name: "Enable {{ satellite_module_name }}:{{ satellite_desired_stream }} module"
+        ansible.builtin.command: "dnf module enable -y {{ satellite_module_name }}:{{ satellite_desired_stream }}"
+        when: current_stream != satellite_desired_stream
+
+    - name: Install Satellite package to workaround https://bugzilla.redhat.com/show_bug.cgi?id=2028410
+      ansible.builtin.package:
+        name: 
+          - satellite
+        state: present
+
+
+- hosts: satellite-dev
+  gather_facts: true
+
+  vars_files:
+    - config/crazy_lab.vault
+    - config/accounts.vault
+
+  collections:
+    - redhat.satellite
+    - redhat.satellite_operations
+
+  tasks:
+    - name: Run satellite-installer
+      ansible.builtin.import_role:
+        name: redhat.satellite_operations.installer
+      vars:
+        satellite_installer_scenario: satellite
+        satellite_installer_options:
+          - '--foreman-initial-organization {{ satellite_organization }}'
+          - '--foreman-initial-admin-password {{ satellite_password }}'
+          - '--foreman-initial-location {{ satellite_initial_location }}'
+
+    - name: Download and install Satellite Manifest
+      ansible.builtin.import_role:
+        name: redhat.satellite.manifest
+      vars:
+        satellite_manifest_path: "/tmp/manifest.zip"
+        satellite_manifest_download: True
+        satellite_rhsm_username: "{{ REDHAT_RHSM_USERNAME }}"
+        satellite_rhsm_password: "{{ REDHAT_RHSM_PASSWORD }}"
+        satellite_manifest_uuid: "{{ crazy_lab_satellite_manifest_uuid }}"
+
+    - name: Setup Satellite Lifecyle Environments
+      ansible.builtin.import_role:
+        name: redhat.satellite.lifecycle_environments
+
+
+    - name: Configure Red Hat Repositories
+      ansible.builtin.import_role:
+        name: redhat.satellite.repositories
+
+    - name: Synchronize configured Repositories
+      redhat.satellite.repository_sync:
+        username: "{{ satellite_username }}"
+        password: "{{ satellite_password }}"
+        server_url: "{{ satellite_server_url }}"
+        product: "{{ item.name }}"
+        organization: "{{ satellite_organization }}"
+      loop: "{{ satellite_products|flatten(levels=1) }}"
+      tags: 
+        - never
+        - sync
+
+    - name: Configure Content-Views
+      ansible.builtin.import_role:
+        name: redhat.satellite.content_views
+
+    - name: Publish Content-Views
+      ansible.builtin.import_role:
+        name: redhat.satellite.content_view_publish
+      tags:
+        - never
+        - publish
+
+    - name: "Ensure all Composite-Content-Views promoted to Development Lifecycle Environment Stage"
+      redhat.satellite.content_view_version:
+        username: "{{ satellite_username }}"
+        password: "{{ satellite_password }}"
+        server_url: "{{ satellite_server_url }}"
+        content_view: "{{ item.name }}"
+        organization: "{{ satellite_organization }}"
+        lifecycle_environments:
+          - Development
+      # Only promote Composite Content-Views starting with 'CCV-'
+      loop: "{{ satellite_content_views| selectattr('name', 'match', '^CCV-.+') }}"
+
+
+    - name: Housekeeping of Content-Views
+      ansible.builtin.import_role:
+        name: redhat.satellite.content_view_version_cleanup
+      vars:
+        satellite_content_view_version_cleanup_keep: 1
+
+    - name: Apply additional Satellite Settings
+      ansible.builtin.import_role:
+        name: redhat.satellite.settings
+
+    - name: Configure Satellite Activation-Keys
+      ansible.builtin.import_role:
+        name: redhat.satellite.activation_keys

@@ -1,0 +1,204 @@
+---
+network_connections:
+  # - name: wlp0s20f3
+  #   type: wireless
+  #   interface_name: wlp0s20f3
+  #   state: down
+  #   wireless:
+  #     ssid: "{{ CRAZY_LAB_WLAN_SSID }}"
+  #     key_mgmt: "wpa-psk"
+  #     password: "{{ CRAZY_LAB_WLAN_PASSWORD }}"
+  #   ip:
+  #     route_metric4: 600
+
+  # Create a profile for the underlying device of the VLAN.
+  - name: eno1
+    type: ethernet
+    autoconnect: true
+    state: up
+    interface_name: eno1
+    ip:
+      auto_gateway: false
+      dhcp4: false
+      auto6: false
+
+  # Define the bridge profile
+  - name: bridge0
+    type: bridge
+    interface_name: bridge0
+    ip:
+      auto_gateway: true
+      dhcp4: true
+      auto6: false
+    state: up
+    persistent_state: present
+
+  # Add an Ethernet profile to the bridge
+  - name: bridge0-port1
+    interface_name: eno1
+    type: ethernet
+    controller: bridge0
+    port_type: bridge
+    state: up
+    persistent_state: present
+
+  # Define the bridge profile
+  - name: bridge1
+    type: bridge
+    interface_name: bridge1
+    state: up
+    autoconnect: true
+    ip:
+      dhcp4_send_hostname: false
+      auto_gateway: false
+      route_metric4: 200
+      dhcp4: true
+      auto6: false
+    persistent_state: present
+
+  # Add an Ethernet profile to the bridge
+  - name: bridge1-port1
+    interface_name: enp0s20f0u2
+    type: ethernet
+    controller: bridge1
+    port_type: bridge
+    state: up
+    persistent_state: present
+
+  # SECURITY.LOCAL - vlan_id: 5
+  # 172.16.5.0/24
+  - name: bridge0.5
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 5
+    ip:
+      dhcp4: false
+      auto6: false
+    persistent_state: absent
+
+  # SECURITY.INFRA - vlan_id: 6
+  # 172.16.6.128/25
+  - name: bridge0.6
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 6
+    ip:
+      dhcp4: false
+      auto6: false
+    persistent_state: absent
+
+  # HOME.LAN - vlan_id: 20
+  # 172.16.20.0/24
+  - name: bridge0.20
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 20
+    ip:
+      dhcp4: false
+      auto6: false
+    persistent_state: absent
+
+  # FRONTEND.CRAZY.LAB - vlan_id: 70
+  # 172.16.70.0/24
+  - name: bridge0.70
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 70
+    ip:
+      dhcp4: false
+      auto6: false
+    persistent_state: absent
+
+  # BACKEND.CRAZY.LAB - vlan_id: 71
+  # 172.16.71.0/24
+  - name: bridge0.71
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 71
+    ip:
+      dhcp4: false
+      auto6: false
+    persistent_state: absent
+
+  # STORAGE.CRAZY.LAB - vlan_id: 72
+  # 172.16.72.0/24
+  - name: bridge0.72
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 72
+    ip:
+      dhcp4: false
+      auto6: false
+    persistent_state: absent
+
+  # CRAZY.LAB - vlan_id: 100
+  # 172.16.100.0/24
+  - name: bridge0.100
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 100
+    ip:
+      auto_gateway: false
+      dhcp4: true
+      auto6: false
+    persistent_state: absent
+
+  # ACME.CORP - vlan_id: 101
+  # 172.16.101.0/24
+  - name: bridge0.101
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 101
+    ip:
+      dhcp4: false
+      auto6: false
+    persistent_state: absent
+
+  # TEST-ZONE - vlan_id: 200
+  # 172.16.200.0/24
+  - name: bridge0.200
+    state: down
+    type: vlan
+    parent: bridge0
+    vlan_id: 200
+    ip:
+      dhcp4: false
+      auto6: false
+    persistent_state: absent
+
+  # Define the bond profile
+  - name: bond0
+    type: bond
+    interface_name: bond0
+    ip:
+      auto_gateway: false
+      dhcp4: false
+      auto6: false
+    bond:
+      mode: 802.3ad
+    state: down
+    persistent_state: present
+
+  # Add an Ethernet profile to the bond
+  - name: bond0-port1
+    interface_name: enp0s20f0u3
+    type: ethernet
+    controller: bond0
+    state: down
+    persistent_state: present
+
+  # Add a second Ethernet profile to the bond
+  - name: bond0-port2
+    interface_name: enp0s20f0u4
+    type: ethernet
+    controller: bond0
+    state: down
+    persistent_state: present

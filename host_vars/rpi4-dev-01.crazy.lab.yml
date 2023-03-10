@@ -1,0 +1,122 @@
+---
+network_connections:
+  - name: wlan0
+    type: wireless
+    interface_name: wlan0
+    state: up
+    wireless:
+      ssid: "{{ CRAZY_LAB_WLAN_SSID }}"
+      key_mgmt: "wpa-psk"
+      password: "{{ CRAZY_LAB_WLAN_PASSWORD }}"
+    ip:
+      route_metric4: 600
+
+  # Create a profile for the underlying device of the VLAN.
+  - name: enabcm6e4ei0
+    type: ethernet
+    autoconnect: false
+    state: up
+    interface_name: enabcm6e4ei0
+    ip:
+      auto_gateway: false
+      dhcp4: true
+      auto6: false
+
+  # SECURITY.LOCAL - vlan_id: 5
+  # 172.16.5.0/24
+  - name: eth0.5
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 5
+    ip:
+      dhcp4: false
+      auto6: false
+
+  # SECURITY.INFRA - vlan_id: 6
+  # 172.16.6.128/25
+  - name: eth0.6
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 6
+    ip:
+      dhcp4: false
+      auto6: false
+
+  # HOME.LAN - vlan_id: 20
+  # 172.16.20.0/24
+  - name: eth0.20
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 20
+    ip:
+      dhcp4: false
+      auto6: false
+
+  # FRONTEND.CRAZY.LAB - vlan_id: 70
+  # 172.16.70.0/24
+  - name: eth0.70
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 70
+    ip:
+      dhcp4: false
+      auto6: false
+
+  # BACKEND.CRAZY.LAB - vlan_id: 71
+  # 172.16.71.0/24
+  - name: eth0.71
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 71
+    ip:
+      dhcp4: false
+      auto6: false
+  # STORAGE.CRAZY.LAB - vlan_id: 72
+  # 172.16.72.0/24
+  - name: eth0.72
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 72
+    ip:
+      dhcp4: false
+      auto6: false
+  # CRAZY.LAB - vlan_id: 100
+  # 172.16.100.0/24
+  - name: eth0.100
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 100
+    ip:
+      route_metric4: 100
+      dhcp4_send_hostname: true
+      dhcp4: true
+      auto6: false
+
+  # ACME.CORP - vlan_id: 101
+  # 172.16.101.0/24
+  - name: eth0.101
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 101
+    ip:
+      dhcp4: false
+      auto6: false
+
+  # TEST-ZONE - vlan_id: 200
+  # 172.16.200.0/24
+  - name: eth0.200
+    state: up
+    type: vlan
+    parent: enabcm6e4ei0
+    vlan_id: 200
+    ip:
+      dhcp4: false
+      auto6: false

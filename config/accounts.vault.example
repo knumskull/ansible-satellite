@@ -1,0 +1,6 @@
+---
+REDHAT_RHSM_USERNAME: ""
+REDHAT_RHSM_PASSWORD: ""
+# Check https://access.redhat.com/articles/3626371
+REDHAT_API_OFFLINE_TOKEN: 
+...
