@@ -6,6 +6,26 @@ Automate Satellite Installation and Configuration using Ansible Roles
 - `redhat.satellite` | [Documentation](https://console.redhat.com/ansible/automation-hub/repo/published/redhat/satellite/docs/)
 - `redhat.satellite_operations` | [Documentation](https://console.redhat.com/ansible/automation-hub/repo/published/redhat/satellite_operations/docs/)
 
+## Problem with roles `content_views` and `content_view_publish` 
+Both roles require the variable `satellite_content_views` defined in different ways. To workaround this, the role task for `content_view_publish` can be adjusted. 
+
+```diff
+--- .ansible/collections/ansible_collections/redhat/satellite/roles/content_view_publish/tasks/main.yml  2023-03-15 22:34:42.626174482 +0100
++++ main.yml    2023-03-15 22:34:35.401170571 +0100
+@@ -5,7 +5,7 @@
+     password: "{{ satellite_password | default(omit) }}"
+     server_url: "{{ satellite_server_url | default(omit) }}"
+     validate_certs: "{{ satellite_validate_certs | default(omit) }}"
+-    content_view: "{{ content_view }}"
++    content_view: "{{ content_view.name | default(content_view) }}"
+     organization: "{{ satellite_organization }}"
+   loop: "{{ satellite_content_views }}"
+   loop_control:
+
+```
+
+The fix is addressed upstream in [Pullrequest #1571](https://github.com/theforeman/foreman-ansible-modules/pull/1571).
+
 ## Virtual Machine used
 ```
 CPU: 4 cores
